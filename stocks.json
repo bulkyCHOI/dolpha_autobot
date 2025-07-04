@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "symbol": "005930",
+    "name": "삼성전자",
+    "market": "KOSPI",
+    "price": 71500,
+    "target_price": 80000,
+    "buy_price": 70000,
+    "quantity": 10,
+    "memo": "반도체 대장주",
+    "created_at": "2025-07-04T16:26:26.239915",
+    "updated_at": "2025-07-04T16:26:26.239915"
+  },
+  {
+    "id": 2,
+    "symbol": "000660",
+    "name": "SK하이닉스",
+    "market": "KOSPI",
+    "price": 132000,
+    "target_price": 150000,
+    "buy_price": null,
+    "quantity": 0,
+    "memo": "메모리 반도체",
+    "created_at": "2025-07-04T16:26:26.239915",
+    "updated_at": "2025-07-04T16:26:26.239915"
+  },
+  {
+    "id": 3,
+    "symbol": "035420",
+    "name": "NAVER",
+    "market": "KOSPI",
+    "price": 185000,
+    "target_price": 200000,
+    "buy_price": 180000,
+    "quantity": 5,
+    "memo": "IT 플랫폼",
+    "created_at": "2025-07-04T16:26:26.239915",
+    "updated_at": "2025-07-04T16:26:26.239915"
+  }
+]
