@@ -1,0 +1,20 @@
+[Unit]
+Description=Dolpha Autobot FastAPI Service
+After=network.target
+
+[Service]
+Type=simple
+User=dolpha
+Group=dolpha
+WorkingDirectory=/home/dolpha/dolpha_project/autobot
+Environment=PATH=/home/dolpha/dolpha_project/autobot/venv/bin
+ExecStart=/home/dolpha/dolpha_project/autobot/venv/bin/python main.py
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
