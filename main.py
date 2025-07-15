@@ -156,7 +156,6 @@ def initialize_sample_data():
             },
         ]
         save_stocks(sample_stocks)
-        print("샘플 주식 데이터가 초기화되었습니다.")
 
 
 # 루트 엔드포인트
@@ -203,7 +202,9 @@ async def read_root():
                     <p><strong>GET</strong> <code>/trading-configs/{user_id}</code> - 사용자별 설정 조회</p>
                     <p><strong>PUT</strong> <code>/trading-configs/{config_id}</code> - 설정 수정</p>
                     <p><strong>DELETE</strong> <code>/trading-configs/{config_id}</code> - 설정 삭제</p>
+                    <p><strong>DELETE</strong> <code>/trading-configs/user/{user_id}/stock/{stock_code}</code> - 사용자별 종목별 설정 삭제</p>
                     <p><strong>POST</strong> <code>/trading-configs/{config_id}/toggle</code> - 활성화/비활성화</p>
+                    <p><strong>POST</strong> <code>/trading-configs/user/{user_id}/stock/{stock_code}/toggle</code> - 사용자별 종목별 활성화/비활성화</p>
                 </div>
                 
                 <p><a href="/docs">📖 Swagger UI 문서 보기</a></p>
@@ -390,17 +391,14 @@ async def get_user_stock_config(user_id: str, stock_code: str):
 async def create_or_update_trading_config(config: AutoTradingConfig):
     """자동매매 설정을 생성하거나 업데이트합니다."""
     try:
-        print(f"받은 설정 데이터: {config.dict()}")
         configs_data = load_trading_configs()
 
         # 동일 사용자의 같은 종목 활성 설정 찾기
         existing_config_index = None
         for i, existing_config in enumerate(configs_data):
             if (existing_config["user_id"] == config.user_id and 
-                existing_config["stock_code"] == config.stock_code and
-                existing_config["is_active"]):
+                existing_config["stock_code"] == config.stock_code):
                 existing_config_index = i
-                print(f"기존 설정 발견: index={i}, id={existing_config['id']}")
                 break
 
         if existing_config_index is not None:
@@ -410,7 +408,6 @@ async def create_or_update_trading_config(config: AutoTradingConfig):
             config.created_at = existing_config["created_at"]  # 생성일 유지
             config.updated_at = datetime.now().isoformat()  # 수정일 업데이트
             
-            print(f"설정 업데이트: id={config.id}")
             # 기존 설정을 새 설정으로 대체
             configs_data[existing_config_index] = config.dict()
         else:
@@ -419,21 +416,15 @@ async def create_or_update_trading_config(config: AutoTradingConfig):
             config.created_at = datetime.now().isoformat()
             config.updated_at = datetime.now().isoformat()
             
-            print(f"새 설정 생성: id={config.id}")
             # 데이터 추가
             configs_data.append(config.dict())
 
         # 변경사항 저장
         save_trading_configs(configs_data)
-        print(f"설정 저장 완료")
 
         return config
         
     except Exception as e:
-        print(f"autobot 설정 처리 오류: {str(e)}")
-        print(f"오류 타입: {type(e)}")
-        import traceback
-        print(f"스택 트레이스: {traceback.format_exc()}")
         raise HTTPException(status_code=400, detail=f"설정 처리 오류: {str(e)}")
 
 
@@ -500,28 +491,36 @@ async def delete_trading_config(config_id: int):
     )
 
 
-@app.post("/trading-configs/{config_id}/toggle")
-async def toggle_trading_config(config_id: int):
-    """자동매매 설정을 활성화/비활성화합니다."""
+@app.delete("/trading-configs/user/{user_id}/stock/{stock_code}")
+async def delete_trading_config_by_user_stock(user_id: str, stock_code: str):
+    """특정 사용자의 특정 종목 자동매매 설정을 삭제합니다."""
+    print(f"[AUTOBOT] 삭제 요청 받음: user_id={user_id}, stock_code={stock_code}")
+    
     configs_data = load_trading_configs()
-
-    for i, config in enumerate(configs_data):
-        if config["id"] == config_id:
-            config["is_active"] = not config["is_active"]
-            config["updated_at"] = datetime.now().isoformat()
-            
-            configs_data[i] = config
-            save_trading_configs(configs_data)
-            
-            status = "활성화" if config["is_active"] else "비활성화"
-            return {
-                "message": f"자동매매 설정이 {status}되었습니다",
-                "is_active": config["is_active"]
-            }
-
+    
+    # 해당 사용자의 해당 종목 설정들을 찾아서 모두 삭제
+    deleted_configs = []
+    filtered_configs = []
+    
+    for config in configs_data:
+        if config["user_id"] == user_id and config["stock_code"] == stock_code:
+            deleted_configs.append(config)
+        else:
+            filtered_configs.append(config)
+    
+    
+    if deleted_configs:
+        save_trading_configs(filtered_configs)
+        
+        stock_name = deleted_configs[0]['stock_name']
+        return {
+            "success": True,
+            "message": f"{stock_name} ({stock_code}) 자동매매 설정 {len(deleted_configs)}개가 삭제되었습니다"
+        }
+    
     raise HTTPException(
         status_code=404, 
-        detail=f"ID {config_id}인 자동매매 설정을 찾을 수 없습니다"
+        detail=f"사용자 {user_id}의 {stock_code} 자동매매 설정을 찾을 수 없습니다"
     )
 
 
