@@ -1,9 +1,6 @@
-# 주식 API 테스트 스크립트
-
 import requests
 import json
 
-# API 기본 URL
 BASE_URL = "http://localhost:8080"
 
 def test_health():
@@ -51,7 +48,7 @@ def test_update_stock():
         "code": "005930",
         "name": "삼성전자",
         "market": "KOSPI",
-        "target_price": 85000,  # 목표가 수정
+        "target_price": 85000,
         "stop_loss_percent": 8.0,
         "target_profit_percent": 25.0,
         "memo": "반도체 대장주 - 목표가 상향 조정"

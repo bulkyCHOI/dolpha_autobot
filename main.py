@@ -15,53 +15,47 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS 설정 추가
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # React 앱 허용
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
-    allow_methods=["*"],  # 모든 HTTP 메서드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# JSON 파일 경로
 STOCKS_FILE = "stocks.json"
 TRADING_CONFIGS_FILE = "trading_configs.json"
-
-
-# 데이터 모델
 class Stock(BaseModel):
     id: Optional[int] = None
-    code: str  # 종목 코드 (예: "005930")
-    name: str  # 종목명 (예: "삼성전자")
-    market: str  # 시장 (KOSPI, KOSDAQ, NASDAQ 등)
-    target_price: Optional[float] = None  # 매수목표가
-    stop_loss_percent: Optional[float] = None  # 손절 %
-    target_profit_percent: Optional[float] = None  # 익절 %
-    memo: Optional[str] = None  # 메모
+    code: str
+    name: str
+    market: str
+    target_price: Optional[float] = None
+    stop_loss_percent: Optional[float] = None
+    target_profit_percent: Optional[float] = None
+    memo: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
 
 class AutoTradingConfig(BaseModel):
     id: Optional[int] = None
-    stock_code: str                    # 종목 코드
-    stock_name: str                    # 종목명
-    trading_mode: str                  # 'manual' 또는 'turtle'
-    max_loss: Optional[float] = None   # 최대손실
-    stop_loss: Optional[float] = None  # 손절가
-    take_profit: Optional[float] = None # 익절가
-    pyramiding_count: int = 0          # 피라미딩 횟수 (0-6)
-    position_size: Optional[float] = None # 1차 진입시점 (포지션 크기)
-    pyramiding_entries: List[str] = [] # 피라미딩 진입시점 배열 (% 값들)
-    positions: List[float] = []        # 포지션 배열 (% 값들)
-    user_id: str                       # 사용자 식별자 (Google ID)
+    stock_code: str
+    stock_name: str
+    trading_mode: str
+    max_loss: Optional[float] = None
+    stop_loss: Optional[float] = None
+    take_profit: Optional[float] = None
+    pyramiding_count: int = 0
+    position_size: Optional[float] = None
+    pyramiding_entries: List[str] = []
+    positions: List[float] = []
+    user_id: str
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-    is_active: bool = True             # 활성화 여부
+    is_active: bool = True
 
 
-# JSON 파일 헬퍼 함수들
 def load_stocks():
     """JSON 파일에서 주식 데이터를 로드합니다."""
     if not os.path.exists(STOCKS_FILE):
@@ -87,7 +81,6 @@ def get_next_stock_id():
     return max(stock["id"] for stock in stocks_data) + 1
 
 
-# 자동매매 설정 헬퍼 함수들
 def load_trading_configs():
     """JSON 파일에서 자동매매 설정 데이터를 로드합니다."""
     if not os.path.exists(TRADING_CONFIGS_FILE):
@@ -158,7 +151,6 @@ def initialize_sample_data():
         save_stocks(sample_stocks)
 
 
-# 루트 엔드포인트
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     return """
@@ -214,7 +206,6 @@ async def read_root():
     """
 
 
-# 주식 종목 관련 엔드포인트
 @app.get("/stocks", response_model=List[Stock])
 async def get_stocks():
     """모든 주식 종목을 조회합니다."""
@@ -281,12 +272,10 @@ async def update_stock(stock_id: int, updated_stock: Stock):
 
     for i, stock in enumerate(stocks_data):
         if stock["id"] == stock_id:
-            # 기존 정보 유지
             updated_stock.id = stock_id
             updated_stock.created_at = stock.get("created_at")
             updated_stock.updated_at = datetime.now().isoformat()
 
-            # 다른 종목과 종목 코드 중복 확인
             for j, other_stock in enumerate(stocks_data):
                 if i != j and other_stock["code"] == updated_stock.code:
                     raise HTTPException(
@@ -331,7 +320,6 @@ async def get_stocks_by_market(market: str):
     return market_stocks
 
 
-# 자동매매 설정 관련 엔드포인트
 @app.get("/trading-configs", response_model=List[AutoTradingConfig])
 async def get_all_trading_configs():
     """모든 자동매매 설정을 조회합니다."""
@@ -344,13 +332,11 @@ async def get_trading_config_by_stock(stock_code: str, user_id: str = None):
     """특정 종목의 자동매매 설정을 조회합니다."""
     configs_data = load_trading_configs()
     
-    # 해당 종목의 활성 설정 찾기 (user_id 있으면 해당 사용자, 없으면 모든 사용자)
     for config in configs_data:
         if config["stock_code"] == stock_code and config["is_active"]:
             if user_id is None or config["user_id"] == user_id:
                 return config
     
-    # 설정이 없으면 404 대신 None을 반환하도록 변경
     return None
 
 
@@ -359,7 +345,6 @@ async def get_user_stock_config(user_id: str, stock_code: str):
     """특정 사용자의 특정 종목 설정을 조회합니다."""
     configs_data = load_trading_configs()
     
-    # 해당 사용자의 해당 종목 설정 찾기 (활성/비활성 모두 포함)
     user_configs = []
     for config in configs_data:
         if config["user_id"] == user_id and config["stock_code"] == stock_code:
@@ -368,7 +353,6 @@ async def get_user_stock_config(user_id: str, stock_code: str):
     if not user_configs:
         return {"config": None, "message": "설정이 없습니다"}
     
-    # 활성 설정 우선 반환, 없으면 가장 최근 설정 반환
     active_config = None
     latest_config = None
     
@@ -393,7 +377,6 @@ async def create_or_update_trading_config(config: AutoTradingConfig):
     try:
         configs_data = load_trading_configs()
 
-        # 동일 사용자의 같은 종목 활성 설정 찾기
         existing_config_index = None
         for i, existing_config in enumerate(configs_data):
             if (existing_config["user_id"] == config.user_id and 
@@ -402,24 +385,19 @@ async def create_or_update_trading_config(config: AutoTradingConfig):
                 break
 
         if existing_config_index is not None:
-            # 기존 설정 업데이트
             existing_config = configs_data[existing_config_index]
-            config.id = existing_config["id"]  # 기존 ID 유지
-            config.created_at = existing_config["created_at"]  # 생성일 유지
-            config.updated_at = datetime.now().isoformat()  # 수정일 업데이트
+            config.id = existing_config["id"]
+            config.created_at = existing_config["created_at"]
+            config.updated_at = datetime.now().isoformat()
             
-            # 기존 설정을 새 설정으로 대체
             configs_data[existing_config_index] = config.dict()
         else:
-            # 새 설정 생성
             config.id = get_next_config_id()
             config.created_at = datetime.now().isoformat()
             config.updated_at = datetime.now().isoformat()
             
-            # 데이터 추가
             configs_data.append(config.dict())
 
-        # 변경사항 저장
         save_trading_configs(configs_data)
 
         return config
@@ -446,12 +424,10 @@ async def update_trading_config(config_id: int, updated_config: AutoTradingConfi
 
     for i, config in enumerate(configs_data):
         if config["id"] == config_id:
-            # 기존 정보 유지
             updated_config.id = config_id
             updated_config.created_at = config.get("created_at")
             updated_config.updated_at = datetime.now().isoformat()
 
-            # 다른 설정과 중복 확인 (자기 자신 제외)
             for j, other_config in enumerate(configs_data):
                 if (i != j and 
                     other_config["user_id"] == updated_config.user_id and
@@ -494,11 +470,8 @@ async def delete_trading_config(config_id: int):
 @app.delete("/trading-configs/user/{user_id}/stock/{stock_code}")
 async def delete_trading_config_by_user_stock(user_id: str, stock_code: str):
     """특정 사용자의 특정 종목 자동매매 설정을 삭제합니다."""
-    print(f"[AUTOBOT] 삭제 요청 받음: user_id={user_id}, stock_code={stock_code}")
-    
     configs_data = load_trading_configs()
     
-    # 해당 사용자의 해당 종목 설정들을 찾아서 모두 삭제
     deleted_configs = []
     filtered_configs = []
     
@@ -507,7 +480,6 @@ async def delete_trading_config_by_user_stock(user_id: str, stock_code: str):
             deleted_configs.append(config)
         else:
             filtered_configs.append(config)
-    
     
     if deleted_configs:
         save_trading_configs(filtered_configs)
@@ -524,7 +496,6 @@ async def delete_trading_config_by_user_stock(user_id: str, stock_code: str):
     )
 
 
-# 헬스 체크 엔드포인트
 @app.get("/health")
 async def health_check():
     """API 상태를 확인합니다."""
@@ -532,7 +503,5 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    # 샘플 데이터 초기화
     initialize_sample_data()
-
     uvicorn.run(app, host="0.0.0.0", port=8080)
