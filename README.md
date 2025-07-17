@@ -36,6 +36,93 @@ python main.py
 uvicorn main:app --reload
 ```
 
+## systemd 서비스로 자동 실행 설정
+
+애플리케이션을 시스템 서비스로 등록하여 부팅시 자동으로 시작되고, 프로세스가 종료되면 자동으로 재시작되도록 설정할 수 있습니다.
+
+### 1. 가상환경 설정 (필수)
+```bash
+# autobot 디렉토리로 이동
+cd /home/dolpha/dolpha_project/autobot
+
+# 가상환경 생성
+python3 -m venv venv
+
+# 가상환경 활성화
+source venv/bin/activate
+
+# 패키지 설치
+pip install -r requirements.txt
+```
+
+### 2. systemd 서비스 파일 복사
+```bash
+# 서비스 파일을 시스템 디렉토리로 복사
+sudo cp autobot.service /etc/systemd/system/
+
+# 적절한 권한 설정
+sudo chmod 644 /etc/systemd/system/autobot.service
+```
+
+### 3. 서비스 등록 및 시작
+```bash
+# systemd 데몬 설정 다시 로드
+sudo systemctl daemon-reload
+
+# 부팅시 자동 시작 설정
+sudo systemctl enable autobot.service
+
+# 서비스 시작
+sudo systemctl start autobot.service
+```
+
+### 4. 서비스 관리 명령어
+```bash
+# 서비스 상태 확인
+sudo systemctl status autobot.service
+
+# 서비스 중지
+sudo systemctl stop autobot.service
+
+# 서비스 재시작
+sudo systemctl restart autobot.service
+
+# 로그 확인
+sudo journalctl -u autobot.service -f
+
+# 부팅시 자동 시작 해제
+sudo systemctl disable autobot.service
+```
+
+### 5. 서비스 설정 파일 (autobot.service)
+```ini
+[Unit]
+Description=Dolpha Autobot FastAPI Service
+After=network.target
+
+[Service]
+Type=simple
+User=dolpha
+Group=dolpha
+WorkingDirectory=/home/dolpha/dolpha_project/autobot
+Environment=PATH=/home/dolpha/dolpha_project/autobot/venv/bin
+ExecStart=/home/dolpha/dolpha_project/autobot/venv/bin/python main.py
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 서비스 등록 후 접속 정보
+- 서버 주소: http://localhost:8080 또는 http://0.0.0.0:8080
+- API 문서: http://localhost:8080/docs
+- ReDoc 문서: http://localhost:8080/redoc
+
 ## API 엔드포인트
 
 ### 기본
