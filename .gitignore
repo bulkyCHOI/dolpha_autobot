@@ -12,3 +12,4 @@ tradingBot/line_alert.py
 tradingBot/trading_log_virtual.csv
 tradingBot/trading_summary_virtual.csv
 tradingBot/trade_history_virtual.json
+trading_configs.json
