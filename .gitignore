@@ -2,3 +2,13 @@
 venv/
 
 trading_configs.json
+tradingBot/stock_token_real.json
+tradingBot/stock_token_virtual.json
+tradingBot/myStockInfo.yaml
+tradingBot/Kosdaqpi_Bot.py
+tradingBot/__pycache__/*
+tradingBot/.env
+tradingBot/line_alert.py
+tradingBot/trading_log_virtual.csv
+tradingBot/trading_summary_virtual.csv
+tradingBot/trade_history_virtual.json
