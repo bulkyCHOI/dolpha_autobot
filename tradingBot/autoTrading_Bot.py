@@ -52,7 +52,7 @@ class AutoTradingBot:
         # 매수 이력 관리 (종목코드: {'entries': [...], 'avg_price': float, 'entry_count': int})
         self.trade_history = {}
         self.history_file = f"trade_history_{mode.lower()}.json"
-        
+
         # CSV 로그 파일 경로
         self.trade_log_file = f"trading_log_{mode.lower()}.csv"
         self.summary_file = f"trading_summary_{mode.lower()}.csv"
@@ -66,10 +66,10 @@ class AutoTradingBot:
 
         # 매수 이력 로드
         self.load_trade_history()
-        
+
         # CSV 파일 초기화
         self.init_csv_files()
-        
+
         # 텔레그램 알림 초기화
         self.init_telegram()
 
@@ -225,67 +225,122 @@ class AutoTradingBot:
         try:
             # 거래 로그 파일 헤더
             trade_log_headers = [
-                'timestamp', 'stock_code', 'stock_name', 'action', 'price', 'quantity', 
-                'amount', 'entry_type', 'reason', 'avg_price', 'total_quantity', 
-                'profit_loss', 'profit_loss_percent', 'trading_mode', 'stop_loss', 
-                'take_profit', 'pyramiding_count', 'position_size'
+                "timestamp",
+                "stock_code",
+                "stock_name",
+                "action",
+                "price",
+                "quantity",
+                "amount",
+                "entry_type",
+                "reason",
+                "avg_price",
+                "total_quantity",
+                "profit_loss",
+                "profit_loss_percent",
+                "trading_mode",
+                "stop_loss",
+                "take_profit",
+                "pyramiding_count",
+                "position_size",
             ]
-            
+
             # 거래 요약 파일 헤더
             summary_headers = [
-                'stock_code', 'stock_name', 'first_entry_date', 'last_exit_date',
-                'total_buy_amount', 'total_sell_amount', 'total_profit_loss', 
-                'profit_loss_percent', 'max_drawdown', 'holding_days', 'entry_count', 
-                'exit_count', 'trading_mode', 'win_rate', 'avg_holding_days', 
-                'max_profit_percent', 'final_status'
+                "stock_code",
+                "stock_name",
+                "first_entry_date",
+                "last_exit_date",
+                "total_buy_amount",
+                "total_sell_amount",
+                "total_profit_loss",
+                "profit_loss_percent",
+                "max_drawdown",
+                "holding_days",
+                "entry_count",
+                "exit_count",
+                "trading_mode",
+                "win_rate",
+                "avg_holding_days",
+                "max_profit_percent",
+                "final_status",
             ]
-            
+
             # 거래 로그 파일이 없으면 헤더와 함께 생성
             if not os.path.exists(self.trade_log_file):
-                with open(self.trade_log_file, 'w', newline='', encoding='utf-8') as f:
+                with open(self.trade_log_file, "w", newline="", encoding="utf-8") as f:
                     writer = csv.writer(f)
                     writer.writerow(trade_log_headers)
                 print(f"[{datetime.now()}] 거래 로그 파일 생성: {self.trade_log_file}")
-            
+
             # 거래 요약 파일이 없으면 헤더와 함께 생성
             if not os.path.exists(self.summary_file):
-                with open(self.summary_file, 'w', newline='', encoding='utf-8') as f:
+                with open(self.summary_file, "w", newline="", encoding="utf-8") as f:
                     writer = csv.writer(f)
                     writer.writerow(summary_headers)
                 print(f"[{datetime.now()}] 거래 요약 파일 생성: {self.summary_file}")
-                
+
         except Exception as e:
             print(f"CSV 파일 초기화 오류: {e}")
 
-    def log_trade(self, stock_code, stock_name, action, price, quantity, amount, 
-                  entry_type, reason, avg_price=None, total_quantity=None, 
-                  profit_loss=None, profit_loss_percent=None, config=None):
+    def log_trade(
+        self,
+        stock_code,
+        stock_name,
+        action,
+        price,
+        quantity,
+        amount,
+        entry_type,
+        reason,
+        avg_price=None,
+        total_quantity=None,
+        profit_loss=None,
+        profit_loss_percent=None,
+        config=None,
+    ):
         """거래 로그 CSV 파일에 기록"""
         try:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+
             # 설정 정보 추출
-            trading_mode = config.get('trading_mode', '') if config else ''
-            stop_loss = config.get('stop_loss', '') if config else ''
-            take_profit = config.get('take_profit', '') if config else ''
-            pyramiding_count = config.get('pyramiding_count', '') if config else ''
-            position_size = config.get('position_size', '') if config else ''
-            
+            trading_mode = config.get("trading_mode", "") if config else ""
+            stop_loss = config.get("stop_loss", "") if config else ""
+            take_profit = config.get("take_profit", "") if config else ""
+            pyramiding_count = config.get("pyramiding_count", "") if config else ""
+            position_size = config.get("position_size", "") if config else ""
+
             # 거래 로그 데이터
             trade_data = [
-                timestamp, stock_code, stock_name, action, price, quantity, amount,
-                entry_type, reason, avg_price or '', total_quantity or '',
-                profit_loss or '', profit_loss_percent or '', trading_mode,
-                stop_loss, take_profit, pyramiding_count, position_size
+                timestamp,
+                stock_code,
+                stock_name,
+                action,
+                price,
+                quantity,
+                amount,
+                entry_type,
+                reason,
+                avg_price or "",
+                total_quantity or "",
+                profit_loss or "",
+                profit_loss_percent or "",
+                trading_mode,
+                stop_loss,
+                take_profit,
+                pyramiding_count,
+                position_size,
             ]
-            
+
             # CSV 파일에 추가
-            with open(self.trade_log_file, 'a', newline='', encoding='utf-8') as f:
+            with open(self.trade_log_file, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(trade_data)
-            
-            print(f"[{stock_name}] 거래 로그 기록: {action} {quantity}주 @ {price:,.0f}원")
-            
+
+            print(
+                f"[{stock_name}] 거래 로그 기록: {action} {quantity}주 @ {price:,.0f}원"
+            )
+
         except Exception as e:
             print(f"거래 로그 기록 오류: {e}")
 
@@ -295,45 +350,53 @@ class AutoTradingBot:
             # 기존 요약 데이터 읽기
             summary_data = {}
             if os.path.exists(self.summary_file):
-                with open(self.summary_file, 'r', encoding='utf-8') as f:
+                with open(self.summary_file, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
-                        summary_data[row['stock_code']] = row
-            
+                        summary_data[row["stock_code"]] = row
+
             # 거래 로그에서 해당 종목 데이터 수집
             trades = []
             if os.path.exists(self.trade_log_file):
-                with open(self.trade_log_file, 'r', encoding='utf-8') as f:
+                with open(self.trade_log_file, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
-                        if row['stock_code'] == stock_code:
+                        if row["stock_code"] == stock_code:
                             trades.append(row)
-            
+
             if not trades:
                 return
-            
+
             # 첫 번째 거래에서 기본 정보 추출
             first_trade = trades[0]
-            stock_name = first_trade['stock_name']
-            trading_mode = first_trade['trading_mode']
-            
+            stock_name = first_trade["stock_name"]
+            trading_mode = first_trade["trading_mode"]
+
             # 매수/매도 거래 분리
-            buy_trades = [t for t in trades if t['action'] == 'BUY']
-            sell_trades = [t for t in trades if t['action'] == 'SELL']
-            
+            buy_trades = [t for t in trades if t["action"] == "BUY"]
+            sell_trades = [t for t in trades if t["action"] == "SELL"]
+
             # 계산
-            first_entry_date = buy_trades[0]['timestamp'] if buy_trades else ''
-            last_exit_date = sell_trades[-1]['timestamp'] if sell_trades else ''
-            
-            total_buy_amount = sum(float(t['amount']) for t in buy_trades if t['amount'])
-            total_sell_amount = sum(float(t['amount']) for t in sell_trades if t['amount'])
-            
+            first_entry_date = buy_trades[0]["timestamp"] if buy_trades else ""
+            last_exit_date = sell_trades[-1]["timestamp"] if sell_trades else ""
+
+            total_buy_amount = sum(
+                float(t["amount"]) for t in buy_trades if t["amount"]
+            )
+            total_sell_amount = sum(
+                float(t["amount"]) for t in sell_trades if t["amount"]
+            )
+
             total_profit_loss = total_sell_amount - total_buy_amount
-            profit_loss_percent = (total_profit_loss / total_buy_amount * 100) if total_buy_amount > 0 else 0
-            
+            profit_loss_percent = (
+                (total_profit_loss / total_buy_amount * 100)
+                if total_buy_amount > 0
+                else 0
+            )
+
             entry_count = len(buy_trades)
             exit_count = len(sell_trades)
-            
+
             # 보유일수 계산
             if first_entry_date and last_exit_date:
                 first_dt = datetime.strptime(first_entry_date, "%Y-%m-%d %H:%M:%S")
@@ -341,77 +404,98 @@ class AutoTradingBot:
                 holding_days = (last_dt - first_dt).total_seconds() / 86400  # 일 단위
             else:
                 holding_days = 0
-            
+
             # 현재 보유 상태 확인
-            total_buy_quantity = sum(float(t['quantity']) for t in buy_trades if t['quantity'])
-            total_sell_quantity = sum(float(t['quantity']) for t in sell_trades if t['quantity'])
+            total_buy_quantity = sum(
+                float(t["quantity"]) for t in buy_trades if t["quantity"]
+            )
+            total_sell_quantity = sum(
+                float(t["quantity"]) for t in sell_trades if t["quantity"]
+            )
             remaining_quantity = total_buy_quantity - total_sell_quantity
-            
+
             if remaining_quantity > 0:
-                final_status = 'HOLDING'
+                final_status = "HOLDING"
             elif exit_count > 0:
-                final_status = 'CLOSED'
+                final_status = "CLOSED"
             else:
-                final_status = 'HOLDING'
-            
+                final_status = "HOLDING"
+
             # 승률 계산 (익절 거래 / 전체 매도 거래)
-            profitable_sells = sum(1 for t in sell_trades 
-                                 if t['profit_loss'] and float(t['profit_loss']) > 0)
+            profitable_sells = sum(
+                1
+                for t in sell_trades
+                if t["profit_loss"] and float(t["profit_loss"]) > 0
+            )
             win_rate = (profitable_sells / len(sell_trades) * 100) if sell_trades else 0
-            
+
             # 요약 데이터 업데이트
             summary_data[stock_code] = {
-                'stock_code': stock_code,
-                'stock_name': stock_name,
-                'first_entry_date': first_entry_date,
-                'last_exit_date': last_exit_date,
-                'total_buy_amount': f"{total_buy_amount:.0f}",
-                'total_sell_amount': f"{total_sell_amount:.0f}",
-                'total_profit_loss': f"{total_profit_loss:.0f}",
-                'profit_loss_percent': f"{profit_loss_percent:.2f}",
-                'max_drawdown': '',  # 추후 구현
-                'holding_days': f"{holding_days:.2f}",
-                'entry_count': entry_count,
-                'exit_count': exit_count,
-                'trading_mode': trading_mode,
-                'win_rate': f"{win_rate:.1f}",
-                'avg_holding_days': f"{holding_days:.2f}",
-                'max_profit_percent': '',  # 추후 구현
-                'final_status': final_status
+                "stock_code": stock_code,
+                "stock_name": stock_name,
+                "first_entry_date": first_entry_date,
+                "last_exit_date": last_exit_date,
+                "total_buy_amount": f"{total_buy_amount:.0f}",
+                "total_sell_amount": f"{total_sell_amount:.0f}",
+                "total_profit_loss": f"{total_profit_loss:.0f}",
+                "profit_loss_percent": f"{profit_loss_percent:.2f}",
+                "max_drawdown": "",  # 추후 구현
+                "holding_days": f"{holding_days:.2f}",
+                "entry_count": entry_count,
+                "exit_count": exit_count,
+                "trading_mode": trading_mode,
+                "win_rate": f"{win_rate:.1f}",
+                "avg_holding_days": f"{holding_days:.2f}",
+                "max_profit_percent": "",  # 추후 구현
+                "final_status": final_status,
             }
-            
+
             # CSV 파일 다시 쓰기
             headers = [
-                'stock_code', 'stock_name', 'first_entry_date', 'last_exit_date',
-                'total_buy_amount', 'total_sell_amount', 'total_profit_loss', 
-                'profit_loss_percent', 'max_drawdown', 'holding_days', 'entry_count', 
-                'exit_count', 'trading_mode', 'win_rate', 'avg_holding_days', 
-                'max_profit_percent', 'final_status'
+                "stock_code",
+                "stock_name",
+                "first_entry_date",
+                "last_exit_date",
+                "total_buy_amount",
+                "total_sell_amount",
+                "total_profit_loss",
+                "profit_loss_percent",
+                "max_drawdown",
+                "holding_days",
+                "entry_count",
+                "exit_count",
+                "trading_mode",
+                "win_rate",
+                "avg_holding_days",
+                "max_profit_percent",
+                "final_status",
             ]
-            
-            with open(self.summary_file, 'w', newline='', encoding='utf-8') as f:
+
+            with open(self.summary_file, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=headers)
                 writer.writeheader()
                 for data in summary_data.values():
                     writer.writerow(data)
-            
+
             print(f"[{stock_name}] 거래 요약 업데이트 완료")
-            
+
         except Exception as e:
             print(f"거래 요약 업데이트 오류: {e}")
             import traceback
+
             traceback.print_exc()
 
     def init_telegram(self):
         """텔레그램 알림 초기화"""
         try:
-            # 봇 시작 알림
-            self.send_telegram_message(
-                f"🚀 자동매매 봇 시작\n\n"
-                f"🏦 계좌: {self.mode}\n"
-                f"📊 활성 종목: {len(self.trading_configs)}개\n"
-                f"🕐 시작시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
+            # 봇 시작 알림 # 매번 실행되서 OFF 최초 셋팅시 ON해서 테스트
+            # self.send_telegram_message(
+            #     f"🚀 자동매매 봇 시작\n\n"
+            #     f"🏦 계좌: {self.mode}\n"
+            #     f"📊 활성 종목: {len(self.trading_configs)}개\n"
+            #     f"🕐 시작시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            # )
+            print(f"[{datetime.now()}] 텔레그램 알림 초기화 완료")
         except Exception as e:
             print(f"텔레그램 초기화 오류: {e}")
 
@@ -419,25 +503,38 @@ class AutoTradingBot:
         """텔레그램 메시지 전송"""
         try:
             # telegram_alert 모듈 사용
-            telegram_alert.send_message(message)
-            
+            telegram_alert.SendMessage(message)
+
             if is_urgent:
                 print(f"[긴급 알림] {message}")
             else:
                 print(f"[알림] 텔레그램 메시지 전송 완료")
-                
+
         except Exception as e:
             print(f"텔레그램 메시지 전송 오류: {e}")
 
-    def send_trade_alert(self, action, stock_code, stock_name, price, quantity, amount, 
-                        entry_type, reason, profit_loss=None, profit_loss_percent=None,
-                        avg_price=None, total_quantity=None, holding_days=None):
+    def send_trade_alert(
+        self,
+        action,
+        stock_code,
+        stock_name,
+        price,
+        quantity,
+        amount,
+        entry_type,
+        reason,
+        profit_loss=None,
+        profit_loss_percent=None,
+        avg_price=None,
+        total_quantity=None,
+        holding_days=None,
+    ):
         """거래 관련 텔레그램 알림"""
         try:
             if action == "BUY":
                 emoji = "🟢"
                 title = "매수 주문 성공"
-                
+
                 message = (
                     f"{emoji} {title}\n\n"
                     f"📊 종목: {stock_name} ({stock_code})\n"
@@ -447,21 +544,25 @@ class AutoTradingBot:
                     f"🎯 유형: {entry_type}\n"
                     f"📅 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
                 )
-                
+
                 if avg_price and total_quantity:
                     message += (
                         f"\n💡 평균단가: {avg_price:,.0f}원\n"
                         f"📊 총보유: {total_quantity:,.0f}주"
                     )
-                    
+
             elif action == "SELL":
                 if profit_loss and profit_loss > 0:
                     emoji = "🔴"
                     title = "매도 주문 성공 (익절)"
                 else:
                     emoji = "⚠️"
-                    title = "매도 주문 성공 (손절)" if "손절" in reason else "매도 주문 성공"
-                
+                    title = (
+                        "매도 주문 성공 (손절)"
+                        if "손절" in reason
+                        else "매도 주문 성공"
+                    )
+
                 message = (
                     f"{emoji} {title}\n\n"
                     f"📊 종목: {stock_name} ({stock_code})\n"
@@ -471,24 +572,22 @@ class AutoTradingBot:
                     f"🎯 사유: {reason}\n"
                     f"📅 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
                 )
-                
+
                 if profit_loss is not None and profit_loss_percent is not None:
                     profit_emoji = "💰" if profit_loss >= 0 else "💸"
                     profit_text = "수익" if profit_loss >= 0 else "손실"
-                    
-                    message += (
-                        f"\n{profit_emoji} {profit_text}: {profit_loss:+,.0f}원 ({profit_loss_percent:+.2f}%)\n"
-                    )
-                    
+
+                    message += f"\n{profit_emoji} {profit_text}: {profit_loss:+,.0f}원 ({profit_loss_percent:+.2f}%)\n"
+
                 if holding_days:
                     if holding_days < 1:
                         holding_text = f"{holding_days * 24:.1f}시간"
                     else:
                         holding_text = f"{holding_days:.1f}일"
                     message += f"⏰ 보유기간: {holding_text}\n"
-            
+
             self.send_telegram_message(message, is_urgent=True)
-            
+
         except Exception as e:
             print(f"거래 알림 전송 오류: {e}")
 
@@ -503,9 +602,9 @@ class AutoTradingBot:
                 f"📅 발생시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                 f"🔄 자동 재시도 중..."
             )
-            
+
             self.send_telegram_message(message, is_urgent=True)
-            
+
         except Exception as e:
             print(f"오류 알림 전송 실패: {e}")
 
@@ -515,32 +614,44 @@ class AutoTradingBot:
             # 오늘 거래 기록 조회
             today = datetime.now().strftime("%Y-%m-%d")
             trades_today = []
-            
+
             if os.path.exists(self.trade_log_file):
-                with open(self.trade_log_file, 'r', encoding='utf-8') as f:
+                with open(self.trade_log_file, "r", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
-                        if row['timestamp'].startswith(today):
+                        if row["timestamp"].startswith(today):
                             trades_today.append(row)
-            
+
             if not trades_today:
                 return
-            
+
             # 통계 계산
-            buy_trades = [t for t in trades_today if t['action'] == 'BUY']
-            sell_trades = [t for t in trades_today if t['action'] == 'SELL']
-            
-            total_buy_amount = sum(float(t['amount']) for t in buy_trades if t['amount'])
-            total_sell_amount = sum(float(t['amount']) for t in sell_trades if t['amount'])
-            
-            realized_profit = sum(float(t['profit_loss']) for t in sell_trades 
-                                if t['profit_loss'] and t['profit_loss'] != '')
-            
-            profitable_trades = sum(1 for t in sell_trades 
-                                  if t['profit_loss'] and float(t['profit_loss']) > 0)
-            
-            win_rate = (profitable_trades / len(sell_trades) * 100) if sell_trades else 0
-            
+            buy_trades = [t for t in trades_today if t["action"] == "BUY"]
+            sell_trades = [t for t in trades_today if t["action"] == "SELL"]
+
+            total_buy_amount = sum(
+                float(t["amount"]) for t in buy_trades if t["amount"]
+            )
+            total_sell_amount = sum(
+                float(t["amount"]) for t in sell_trades if t["amount"]
+            )
+
+            realized_profit = sum(
+                float(t["profit_loss"])
+                for t in sell_trades
+                if t["profit_loss"] and t["profit_loss"] != ""
+            )
+
+            profitable_trades = sum(
+                1
+                for t in sell_trades
+                if t["profit_loss"] and float(t["profit_loss"]) > 0
+            )
+
+            win_rate = (
+                (profitable_trades / len(sell_trades) * 100) if sell_trades else 0
+            )
+
             message = (
                 f"🌅 장 마감 - 일일 결산\n\n"
                 f"📅 거래일: {today}\n"
@@ -554,9 +665,9 @@ class AutoTradingBot:
                 f"🏆 성과:\n"
                 f"  📊 승률: {win_rate:.1f}% ({profitable_trades}/{len(sell_trades)})\n"
             )
-            
+
             self.send_telegram_message(message)
-            
+
         except Exception as e:
             print(f"일일 결산 알림 오류: {e}")
 
@@ -887,11 +998,13 @@ class AutoTradingBot:
                 self.update_trade_history(
                     stock_code, stock_name, current_price, buy_quantity, entry_type
                 )
-                
+
                 # CSV 거래 로그 기록
                 avg_price = self.get_average_price(stock_code)
-                total_quantity = self.get_entry_count(stock_code) * buy_quantity  # 간단 계산
-                
+                total_quantity = (
+                    self.get_entry_count(stock_code) * buy_quantity
+                )  # 간단 계산
+
                 self.log_trade(
                     stock_code=stock_code,
                     stock_name=stock_name,
@@ -900,15 +1013,17 @@ class AutoTradingBot:
                     quantity=buy_quantity,
                     amount=amount,
                     entry_type=entry_type,
-                    reason="신규진입" if entry_type == "initial" else f"{entry_type} 매수",
+                    reason=(
+                        "신규진입" if entry_type == "initial" else f"{entry_type} 매수"
+                    ),
                     avg_price=avg_price,
                     total_quantity=total_quantity,
-                    config=config
+                    config=config,
                 )
-                
+
                 # 거래 요약 업데이트
                 self.update_trading_summary(stock_code)
-                
+
                 # 텔레그램 알림 전송
                 self.send_trade_alert(
                     action="BUY",
@@ -918,9 +1033,11 @@ class AutoTradingBot:
                     quantity=buy_quantity,
                     amount=amount,
                     entry_type=entry_type,
-                    reason="신규진입" if entry_type == "initial" else f"{entry_type} 매수",
+                    reason=(
+                        "신규진입" if entry_type == "initial" else f"{entry_type} 매수"
+                    ),
                     avg_price=avg_price,
-                    total_quantity=total_quantity
+                    total_quantity=total_quantity,
                 )
 
                 print(
@@ -933,7 +1050,7 @@ class AutoTradingBot:
                     error_type="매수 주문 실패",
                     stock_code=stock_code,
                     stock_name=stock_name,
-                    error_message="시장가 매수 주문이 실패했습니다"
+                    error_message="시장가 매수 주문이 실패했습니다",
                 )
                 print(f"[{stock_name}] 매수 주문 실패")
                 return False
@@ -942,9 +1059,9 @@ class AutoTradingBot:
             # 매수 오류 알림
             self.send_error_alert(
                 error_type="매수 주문 오류",
-                stock_code=config.get('stock_code', ''),
-                stock_name=config.get('stock_name', ''),
-                error_message=str(e)
+                stock_code=config.get("stock_code", ""),
+                stock_name=config.get("stock_name", ""),
+                error_message=str(e),
             )
             print(f"매수 주문 오류 [{config['stock_name']}]: {e}")
             return False
@@ -976,18 +1093,20 @@ class AutoTradingBot:
                 # 현재가 및 수익 계산
                 current_price = float(KisKR.GetCurrentPrice(stock_code))
                 sell_amount = current_price * holding_amount
-                
+
                 # 평균 매수가 조회
                 avg_price = self.get_average_price(stock_code)
-                
+
                 # 수익 계산
                 if avg_price:
                     profit_loss = sell_amount - (avg_price * holding_amount)
-                    profit_loss_percent = (profit_loss / (avg_price * holding_amount)) * 100
+                    profit_loss_percent = (
+                        profit_loss / (avg_price * holding_amount)
+                    ) * 100
                 else:
                     profit_loss = 0
                     profit_loss_percent = 0
-                
+
                 # CSV 거래 로그 기록
                 self.log_trade(
                     stock_code=stock_code,
@@ -1002,24 +1121,27 @@ class AutoTradingBot:
                     total_quantity=0,  # 전량 매도 후 0
                     profit_loss=profit_loss,
                     profit_loss_percent=profit_loss_percent,
-                    config=config
+                    config=config,
                 )
-                
+
                 # 매수 이력 초기화 (전량 매도)
                 if stock_code in self.trade_history:
                     del self.trade_history[stock_code]
                     self.save_trade_history()
-                
+
                 # 거래 요약 업데이트
                 self.update_trading_summary(stock_code)
-                
+
                 # 보유기간 계산
                 holding_days = None
-                if stock_code in self.trade_history and self.trade_history[stock_code]['entries']:
-                    first_entry = self.trade_history[stock_code]['entries'][0]
-                    first_time = datetime.fromisoformat(first_entry['timestamp'])
+                if (
+                    stock_code in self.trade_history
+                    and self.trade_history[stock_code]["entries"]
+                ):
+                    first_entry = self.trade_history[stock_code]["entries"][0]
+                    first_time = datetime.fromisoformat(first_entry["timestamp"])
                     holding_days = (datetime.now() - first_time).total_seconds() / 86400
-                
+
                 # 텔레그램 알림 전송
                 self.send_trade_alert(
                     action="SELL",
@@ -1034,13 +1156,15 @@ class AutoTradingBot:
                     profit_loss_percent=profit_loss_percent,
                     avg_price=avg_price,
                     total_quantity=0,
-                    holding_days=holding_days
+                    holding_days=holding_days,
                 )
-                
+
                 print(
                     f"[{stock_name}] 매도 주문 성공 - 수량: {holding_amount}주, 사유: {reason}"
                 )
-                print(f"[{stock_name}] 수익: {profit_loss:,.0f}원 ({profit_loss_percent:.2f}%)")
+                print(
+                    f"[{stock_name}] 수익: {profit_loss:,.0f}원 ({profit_loss_percent:.2f}%)"
+                )
                 return True
             else:
                 # 매도 실패 알림
@@ -1048,7 +1172,7 @@ class AutoTradingBot:
                     error_type="매도 주문 실패",
                     stock_code=stock_code,
                     stock_name=stock_name,
-                    error_message="시장가 매도 주문이 실패했습니다"
+                    error_message="시장가 매도 주문이 실패했습니다",
                 )
                 print(f"[{stock_name}] 매도 주문 실패")
                 return False
@@ -1057,9 +1181,9 @@ class AutoTradingBot:
             # 매도 오류 알림
             self.send_error_alert(
                 error_type="매도 주문 오류",
-                stock_code=config.get('stock_code', ''),
-                stock_name=config.get('stock_name', ''),
-                error_message=str(e)
+                stock_code=config.get("stock_code", ""),
+                stock_name=config.get("stock_name", ""),
+                error_message=str(e),
             )
             print(f"매도 주문 오류 [{config['stock_name']}]: {e}")
             return False
@@ -1124,10 +1248,10 @@ class AutoTradingBot:
                     )
 
             # 장 마감 시간(15:30)에 일일 결산 알림
-            current_time = datetime.now().strftime('%H%M')
-            if current_time == '1530':
+            current_time = datetime.now().strftime("%H%M")
+            if current_time == "1530":
                 self.send_daily_summary()
-            
+
             print(f"[{datetime.now()}] === 트레이딩 사이클 완료 ===\n")
 
         except Exception as e:
@@ -1136,7 +1260,7 @@ class AutoTradingBot:
                 error_type="트레이딩 사이클 오류",
                 stock_code="SYSTEM",
                 stock_name="시스템",
-                error_message=str(e)
+                error_message=str(e),
             )
             traceback.print_exc()
             print(f"트레이딩 사이클 오류: {e}")
@@ -1164,15 +1288,17 @@ def main():
         print("\n사용자에 의해 중단되었습니다.")
         try:
             # 종료 알림 (bot이 정의된 경우에만)
-            if 'bot' in locals():
-                bot.send_telegram_message("⏹️ 자동매매 봇이 사용자에 의해 중단되었습니다.")
+            if "bot" in locals():
+                bot.send_telegram_message(
+                    "⏹️ 자동매매 봇이 사용자에 의해 중단되었습니다."
+                )
         except:
             pass
     except Exception as e:
         print(f"메인 함수 오류: {e}")
         try:
             # 오류 알림 (bot이 정의된 경우에만)
-            if 'bot' in locals():
+            if "bot" in locals():
                 bot.send_error_alert("메인 함수 오류", "SYSTEM", "시스템", str(e))
         except:
             pass

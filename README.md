@@ -59,6 +59,7 @@ pip install -r requirements.txt
 ```bash
 # 서비스 파일을 시스템 디렉토리로 복사
 sudo cp autobot.service /etc/systemd/system/
+sudo cp autobot_ec2.service /etc/systemd/system/autobot.service
 
 # 적절한 권한 설정
 sudo chmod 644 /etc/systemd/system/autobot.service
@@ -179,3 +180,30 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 - 홈페이지: http://localhost:8000
 - API 문서: http://localhost:8000/docs
 - ReDoc 문서: http://localhost:8000/redoc
+
+# EC2에서는 80, 443, 22 3개 포트만 허용되어 있으므로 추가 허용을 해야함
+ping(ICMP)과 8080 포트 접속을 위해 보안 그룹에서 인바운드 규칙을 추가합니다.
+
+보안 그룹 확인:
+EC2 대시보드 > Instances > 인스턴스 선택 > Security 탭 > Security groups 클릭.
+Inbound rules 확인.
+  8080 포트 허용:
+  Add rule:
+  Type: Custom TCP
+  Port range: 8080
+  Source: 0.0.0.0/0 또는 특정 IP.
+  Description: "FastAPI 8080 access".
+  저장.
+
+
+# EC2에 autobot 등록
+crontab에 /tradingBot/script.sh를 등록
+크론탭 실행 기본 폴더는 ~/ 즉 home이므로 소스코드내 상대경로를 잘못 읽게 되어 스크립트 파일을 실행하는 형태로 변경
+script.sh 파일내 아래 항목 참조하여 등록
+# script파일 권한 추가
+# chmod +x /var/autobot/dolpha_autobot/tradingBot/script.sh
+# 크론탭 등록
+# * * * * * /var/autobot/dolpha_autobot/tradingBot/script.sh
+
+
+
