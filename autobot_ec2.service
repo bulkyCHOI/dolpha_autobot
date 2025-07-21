@@ -1,11 +1,9 @@
 [Unit]
-Description=Dolpha Autobot FastAPI Service
+Description=Dolpha Autobot FastAPI Service in EC2
 After=network.target
 
 [Service]
-Type=simple
-User=dolpha
-Group=dolpha
+User=ec2-user
 WorkingDirectory=/var/autobot/dolpha_autobot
 Environment=PATH=/var/autobot/dolpha_autobot/venv/bin
 ExecStart=/var/autobot/dolpha_autobot/venv/bin/python /var/autobot/dolpha_autobot/main.py
