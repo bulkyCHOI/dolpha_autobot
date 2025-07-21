@@ -106,5 +106,27 @@
     "created_at": "2025-07-19T22:04:35.854469",
     "updated_at": "2025-07-19T22:04:35.854484",
     "is_active": true
+  },
+  {
+    "id": 9,
+    "stock_code": "115310",
+    "stock_name": "인포바인",
+    "trading_mode": "manual",
+    "max_loss": 2.0,
+    "stop_loss": 8.0,
+    "take_profit": 24.0,
+    "pyramiding_count": 1,
+    "position_size": 75000.0,
+    "pyramiding_entries": [
+      "4"
+    ],
+    "positions": [
+      50.0,
+      50.0
+    ],
+    "user_id": "112108095736070265399",
+    "created_at": "2025-07-21T10:28:45.154666",
+    "updated_at": "2025-07-21T10:28:45.154837",
+    "is_active": true
   }
 ]
