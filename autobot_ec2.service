@@ -8,7 +8,7 @@ User=dolpha
 Group=dolpha
 WorkingDirectory=/var/autobot/dolpha_autobot
 Environment=PATH=/var/autobot/dolpha_autobot/venv/bin
-ExecStart=/var/autobot/dolpha_autobot/venv/bin/python main.py
+ExecStart=/var/autobot/dolpha_autobot/venv/bin/python /var/autobot/dolpha_autobot/main.py
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 TimeoutStopSec=5
