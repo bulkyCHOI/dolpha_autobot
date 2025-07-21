@@ -1,7 +1,6 @@
 # 가상 환경
 venv/
 
-trading_configs.json
 tradingBot/stock_token_real.json
 tradingBot/stock_token_virtual.json
 tradingBot/myStockInfo.yaml
@@ -12,5 +11,7 @@ tradingBot/line_alert.py
 tradingBot/trading_log_virtual.csv
 tradingBot/trading_summary_virtual.csv
 tradingBot/trade_history_virtual.json
-trading_configs.json
-trading_configs.json
+tradingBot/trading_configs.json
+
+tradingBot/cron_temp.log
+tradingBot/Python-3.12.0/
