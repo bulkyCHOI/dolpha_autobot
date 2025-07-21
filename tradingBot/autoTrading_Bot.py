@@ -488,13 +488,14 @@ class AutoTradingBot:
     def init_telegram(self):
         """텔레그램 알림 초기화"""
         try:
-            # 봇 시작 알림
-            self.send_telegram_message(
-                f"🚀 자동매매 봇 시작\n\n"
-                f"🏦 계좌: {self.mode}\n"
-                f"📊 활성 종목: {len(self.trading_configs)}개\n"
-                f"🕐 시작시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
+            # 봇 시작 알림 # 매번 실행되서 OFF 최초 셋팅시 ON해서 테스트
+            # self.send_telegram_message(
+            #     f"🚀 자동매매 봇 시작\n\n"
+            #     f"🏦 계좌: {self.mode}\n"
+            #     f"📊 활성 종목: {len(self.trading_configs)}개\n"
+            #     f"🕐 시작시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            # )
+            print(f"[{datetime.now()}] 텔레그램 알림 초기화 완료")
         except Exception as e:
             print(f"텔레그램 초기화 오류: {e}")
 
