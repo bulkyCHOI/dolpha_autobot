@@ -43,11 +43,12 @@ class AutoTradingConfig(BaseModel):
     stock_code: str
     stock_name: str
     trading_mode: str
+    strategy_type: str = 'mtt'  # 'mtt' or 'weekly_high'
     max_loss: Optional[float] = None
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
     pyramiding_count: int = 0
-    position_size: Optional[float] = None
+    entry_point: Optional[float] = None
     pyramiding_entries: List[str] = []
     positions: List[float] = []
     user_id: str
@@ -380,7 +381,8 @@ async def create_or_update_trading_config(config: AutoTradingConfig):
         existing_config_index = None
         for i, existing_config in enumerate(configs_data):
             if (existing_config["user_id"] == config.user_id and 
-                existing_config["stock_code"] == config.stock_code):
+                existing_config["stock_code"] == config.stock_code and
+                existing_config.get("strategy_type", "mtt") == config.strategy_type):
                 existing_config_index = i
                 break
 
@@ -407,13 +409,21 @@ async def create_or_update_trading_config(config: AutoTradingConfig):
 
 
 @app.get("/trading-configs/{user_id}", response_model=List[AutoTradingConfig])
-async def get_user_trading_configs(user_id: str):
-    """사용자별 자동매매 설정을 조회합니다."""
+async def get_user_trading_configs(user_id: str, strategy_type: Optional[str] = None):
+    """사용자별 자동매매 설정을 조회합니다. (strategy_type 필터 지원)"""
     configs_data = load_trading_configs()
     user_configs = [
         config for config in configs_data 
         if config["user_id"] == user_id
     ]
+    
+    # strategy_type 필터링
+    if strategy_type:
+        user_configs = [
+            config for config in user_configs
+            if config.get("strategy_type", "mtt") == strategy_type
+        ]
+    
     return user_configs
 
 
@@ -468,16 +478,20 @@ async def delete_trading_config(config_id: int):
 
 
 @app.delete("/trading-configs/user/{user_id}/stock/{stock_code}")
-async def delete_trading_config_by_user_stock(user_id: str, stock_code: str):
-    """특정 사용자의 특정 종목 자동매매 설정을 삭제합니다."""
+async def delete_trading_config_by_user_stock(user_id: str, stock_code: str, strategy_type: Optional[str] = None):
+    """특정 사용자의 특정 종목 자동매매 설정을 삭제합니다. (strategy_type 필터 지원)"""
     configs_data = load_trading_configs()
     
     deleted_configs = []
     filtered_configs = []
     
     for config in configs_data:
-        if config["user_id"] == user_id and config["stock_code"] == stock_code:
-            deleted_configs.append(config)
+        if (config["user_id"] == user_id and config["stock_code"] == stock_code):
+            # strategy_type이 지정된 경우 해당 전략만 삭제
+            if strategy_type and config.get("strategy_type", "mtt") != strategy_type:
+                filtered_configs.append(config)
+            else:
+                deleted_configs.append(config)
         else:
             filtered_configs.append(config)
     
