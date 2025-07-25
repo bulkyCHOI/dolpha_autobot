@@ -243,7 +243,7 @@ class AutoTradingBot:
                 "stop_loss",
                 "take_profit",
                 "pyramiding_count",
-                "position_size",
+                "entry_point",
             ]
 
             # 거래 요약 파일 헤더
@@ -309,7 +309,7 @@ class AutoTradingBot:
             stop_loss = config.get("stop_loss", "") if config else ""
             take_profit = config.get("take_profit", "") if config else ""
             pyramiding_count = config.get("pyramiding_count", "") if config else ""
-            position_size = config.get("position_size", "") if config else ""
+            entry_point = config.get("entry_point", "") if config else ""
 
             # 거래 로그 데이터
             trade_data = [
@@ -330,7 +330,7 @@ class AutoTradingBot:
                 stop_loss,
                 take_profit,
                 pyramiding_count,
-                position_size,
+                entry_point,
             ]
 
             # CSV 파일에 추가
@@ -781,11 +781,11 @@ class AutoTradingBot:
             # 신규 진입 조건 체크
             # 여기서는 단순히 설정된 진입가격 기준으로 체크
             # 실제로는 더 복잡한 기술적 분석이 필요할 수 있음
-            position_size = config.get("position_size", 0)
+            entry_point = config.get("entry_point", 0)
             print(
-                f"[{stock_name}] 현재가: {current_price:,.0f}원, 진입가: {position_size:,.0f}원"
+                f"[{stock_name}] 현재가: {current_price:,.0f}원, 진입가: {entry_point:,.0f}원"
             )
-            if position_size > 0 and current_price >= position_size:
+            if entry_point > 0 and current_price >= entry_point:
                 print(
                     f"[{stock_name}] 신규 진입 조건 충족 - 현재가: {current_price:,.0f}원"
                 )
@@ -826,7 +826,7 @@ class AutoTradingBot:
                 return False
 
             # 기준가 설정 (1차 진입시점)
-            base_price = config.get("position_size")
+            base_price = config.get("entry_point")
             if base_price is None:
                 print(f"[{stock_name}] 기준가 설정 실패")
                 return False
@@ -1219,10 +1219,14 @@ class AutoTradingBot:
             print(f"현재 잔고: {balance['TotalMoney']}원")
 
             # 각 설정에 대해 매매 로직 실행
+            print("매매대상 종목 수:", len(self.trading_configs))
             for config in self.trading_configs:
                 try:
                     stock_name = config["stock_name"]
                     print(f"\n[{stock_name}] 매매 체크 시작")
+
+                    # 100ms 딜레이 추가
+                    time.sleep(0.5)  # 100ms 딜레이
 
                     # 청산 조건 체크 (우선순위: 손절/익절)
                     should_exit, exit_reason = self.check_exit_conditions(config)

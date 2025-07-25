@@ -386,19 +386,22 @@ async def create_or_update_trading_config(config: AutoTradingConfig):
                 existing_config_index = i
                 break
 
+        # 설정을 딕셔너리로 변환
+        config_dict = config.dict()
+        
         if existing_config_index is not None:
             existing_config = configs_data[existing_config_index]
-            config.id = existing_config["id"]
-            config.created_at = existing_config["created_at"]
-            config.updated_at = datetime.now().isoformat()
+            config_dict["id"] = existing_config["id"]
+            config_dict["created_at"] = existing_config["created_at"]
+            config_dict["updated_at"] = datetime.now().isoformat()
             
-            configs_data[existing_config_index] = config.dict()
+            configs_data[existing_config_index] = config_dict
         else:
-            config.id = get_next_config_id()
-            config.created_at = datetime.now().isoformat()
-            config.updated_at = datetime.now().isoformat()
+            config_dict["id"] = get_next_config_id()
+            config_dict["created_at"] = datetime.now().isoformat()
+            config_dict["updated_at"] = datetime.now().isoformat()
             
-            configs_data.append(config.dict())
+            configs_data.append(config_dict)
 
         save_trading_configs(configs_data)
 
@@ -448,7 +451,10 @@ async def update_trading_config(config_id: int, updated_config: AutoTradingConfi
                         detail=f"사용자 '{updated_config.user_id}'의 종목 '{updated_config.stock_code}' 활성 설정이 이미 존재합니다"
                     )
 
-            configs_data[i] = updated_config.dict()
+            # 설정을 딕셔너리로 변환
+            config_dict = updated_config.dict()
+            
+            configs_data[i] = config_dict
             save_trading_configs(configs_data)
             return updated_config
 
