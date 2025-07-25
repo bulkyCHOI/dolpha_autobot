@@ -100,8 +100,9 @@ class AutoTradingBot:
     def load_configs(self):
         """trading_configs.json 파일에서 설정 로드"""
         try:
+            # autobot 폴더의 trading_configs.json 파일 경로
             config_path = os.path.join(
-                os.path.dirname(__file__), "../trading_configs.json"
+                os.path.dirname(os.path.dirname(__file__)), "trading_configs.json"
             )
             with open(config_path, "r", encoding="utf-8") as f:
                 all_configs = json.load(f)
