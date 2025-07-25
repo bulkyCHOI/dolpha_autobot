@@ -1197,9 +1197,9 @@ class AutoTradingBot:
             print(f"\n[{datetime.now()}] === 트레이딩 사이클 시작 ===")
 
             # 장 시간 체크
-            # if not self.is_market_open():
-            #     print("장 시간이 아닙니다. 종료합니다.")
-            #     return
+            if not self.is_market_open():
+                print("장 시간이 아닙니다. 종료합니다.")
+                return
 
             # 잔고 확인
             balance = KisKR.GetBalance()
