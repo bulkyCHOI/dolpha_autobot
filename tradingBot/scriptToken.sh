@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 cd /var/autobot/dolpha_autobot/tradingBot
 /var/autobot/dolpha_autobot/venv/bin/python /var/autobot/dolpha_autobot/tradingBot/KIS_MakeToken.py
 
