@@ -43,7 +43,7 @@ class AutoTradingConfig(BaseModel):
     stock_code: str
     stock_name: str
     trading_mode: str
-    strategy_type: str = 'mtt'  # 'mtt' or 'weekly_high'
+    strategy_type: str = 'mtt'  # 'mtt', 'weekly_high', 'fifty_day_high', 'daily_top50'
     max_loss: Optional[float] = None
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
