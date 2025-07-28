@@ -698,7 +698,7 @@ class AutoTradingBot:
 
     def calculate_pyramiding_amounts(self, config, total_amount):
         """
-        피라미딩 수량 계산
+        피라미딩 수량 계산 - 각 차수별 증분 금액 반환
         """
         try:
             pyramiding_count = config.get("pyramiding_count", 0)
@@ -722,6 +722,28 @@ class AutoTradingBot:
         except Exception as e:
             print(f"피라미딩 수량 계산 오류: {e}")
             return [total_amount]
+
+    def get_current_entry_amount(self, config, total_amount):
+        """
+        현재 진입 차수에 해당하는 증분 금액 계산
+        """
+        try:
+            stock_code = config["stock_code"]
+            current_entry_count = self.get_entry_count(stock_code)
+            
+            # 피라미딩 금액 배열 계산
+            amounts = self.calculate_pyramiding_amounts(config, total_amount)
+            
+            # 현재 진입 차수에 해당하는 금액 반환
+            if current_entry_count < len(amounts):
+                return amounts[current_entry_count]
+            else:
+                # 설정된 피라미딩 횟수를 초과한 경우
+                return 0
+
+        except Exception as e:
+            print(f"현재 진입 금액 계산 오류: {e}")
+            return total_amount
 
     def get_atr(self, stock_code, period=14):
         """
@@ -1240,12 +1262,15 @@ class AutoTradingBot:
                         # 포지션 크기 계산
                         position_amount = self.calculate_position_size(config)
                         if position_amount > 0:
-                            # 피라미딩 수량 계산
-                            amounts = self.calculate_pyramiding_amounts(
+                            # 현재 진입 차수에 해당하는 금액 계산
+                            current_amount = self.get_current_entry_amount(
                                 config, position_amount
                             )
-                            # 첫 번째 진입 (또는 다음 피라미딩 단계)
-                            self.execute_buy_order(config, amounts[0])
+                            if current_amount > 0:
+                                # 현재 피라미딩 차수에 맞는 금액으로 매수
+                                self.execute_buy_order(config, current_amount)
+                            else:
+                                print(f"[{config['stock_name']}] 피라미딩 한도 초과 또는 투자금액 부족")
 
                 except Exception as e:
                     print(
