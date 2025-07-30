@@ -1248,7 +1248,7 @@ class AutoTradingBot:
                     print(f"\n[{stock_name}] 매매 체크 시작")
 
                     # 100ms 딜레이 추가
-                    time.sleep(1)  # 500ms 딜레이
+                    time.sleep(2)  # 500ms 딜레이
 
                     # 청산 조건 체크 (우선순위: 손절/익절)
                     should_exit, exit_reason = self.check_exit_conditions(config)
