@@ -386,8 +386,22 @@ async def create_or_update_trading_config(config: AutoTradingConfig):
                 existing_config_index = i
                 break
 
-        # 설정을 딕셔너리로 변환
-        config_dict = config.dict()
+        # 설정을 딕셔너리로 변환 (명시적으로 필요한 필드만 추출)
+        config_dict = {
+            "stock_code": config.stock_code,
+            "stock_name": config.stock_name,
+            "trading_mode": config.trading_mode,
+            "strategy_type": config.strategy_type,
+            "max_loss": config.max_loss,
+            "stop_loss": config.stop_loss,
+            "take_profit": config.take_profit,
+            "pyramiding_count": config.pyramiding_count,
+            "entry_point": config.entry_point,
+            "pyramiding_entries": config.pyramiding_entries,
+            "positions": config.positions,
+            "user_id": config.user_id,
+            "is_active": config.is_active,
+        }
         
         if existing_config_index is not None:
             existing_config = configs_data[existing_config_index]
@@ -451,8 +465,25 @@ async def update_trading_config(config_id: int, updated_config: AutoTradingConfi
                         detail=f"사용자 '{updated_config.user_id}'의 종목 '{updated_config.stock_code}' 활성 설정이 이미 존재합니다"
                     )
 
-            # 설정을 딕셔너리로 변환
-            config_dict = updated_config.dict()
+            # 설정을 딕셔너리로 변환 (명시적으로 필요한 필드만 추출)
+            config_dict = {
+                "id": config_id,
+                "stock_code": updated_config.stock_code,
+                "stock_name": updated_config.stock_name,
+                "trading_mode": updated_config.trading_mode,
+                "strategy_type": updated_config.strategy_type,
+                "max_loss": updated_config.max_loss,
+                "stop_loss": updated_config.stop_loss,
+                "take_profit": updated_config.take_profit,
+                "pyramiding_count": updated_config.pyramiding_count,
+                "entry_point": updated_config.entry_point,
+                "pyramiding_entries": updated_config.pyramiding_entries,
+                "positions": updated_config.positions,
+                "user_id": updated_config.user_id,
+                "created_at": config.get("created_at"),
+                "updated_at": datetime.now().isoformat(),
+                "is_active": updated_config.is_active,
+            }
             
             configs_data[i] = config_dict
             save_trading_configs(configs_data)

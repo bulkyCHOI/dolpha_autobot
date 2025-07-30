@@ -66,11 +66,14 @@ def test_create_trading_config():
         "stock_code": "005930",
         "stock_name": "삼성전자",
         "trading_mode": "turtle",
+        "strategy_type": "mtt",
         "max_loss": 10.0,
         "stop_loss": 5.0,
         "take_profit": 15.0,
         "pyramiding_count": 3,
-        "position_size": 100000.0,
+        "entry_point": 75000.0,
+        "pyramiding_entries": ["1", "2", "3"],
+        "positions": [25.0, 25.0, 25.0, 25.0],
         "user_id": "test_user_001",
         "is_active": True
     }
