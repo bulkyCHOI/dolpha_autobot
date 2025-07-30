@@ -730,10 +730,10 @@ class AutoTradingBot:
         try:
             stock_code = config["stock_code"]
             current_entry_count = self.get_entry_count(stock_code)
-            
+
             # 피라미딩 금액 배열 계산
             amounts = self.calculate_pyramiding_amounts(config, total_amount)
-            
+
             # 현재 진입 차수에 해당하는 금액 반환
             if current_entry_count < len(amounts):
                 return amounts[current_entry_count]
@@ -1248,7 +1248,7 @@ class AutoTradingBot:
                     print(f"\n[{stock_name}] 매매 체크 시작")
 
                     # 100ms 딜레이 추가
-                    time.sleep(0.5)  # 100ms 딜레이
+                    time.sleep(1)  # 500ms 딜레이
 
                     # 청산 조건 체크 (우선순위: 손절/익절)
                     should_exit, exit_reason = self.check_exit_conditions(config)
@@ -1270,7 +1270,9 @@ class AutoTradingBot:
                                 # 현재 피라미딩 차수에 맞는 금액으로 매수
                                 self.execute_buy_order(config, current_amount)
                             else:
-                                print(f"[{config['stock_name']}] 피라미딩 한도 초과 또는 투자금액 부족")
+                                print(
+                                    f"[{config['stock_name']}] 피라미딩 한도 초과 또는 투자금액 부족"
+                                )
 
                 except Exception as e:
                     print(
