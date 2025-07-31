@@ -16,3 +16,7 @@ tradingBot/trading_configs.json
 tradingBot/cron_temp.log
 tradingBot/Python-3.12.0/
 trading_configs.json
+tradingBot/trading_log.csv
+tradingBot/trading_summary.csv
+.gitignore
+tradingBot/trade_history.json
