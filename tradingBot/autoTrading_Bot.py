@@ -674,22 +674,67 @@ class AutoTradingBot:
 
     def calculate_position_size(self, config):
         """
-        포지션 크기 계산
-        공식: 계좌잔고 * max_loss% / stop_loss%
+        매매모드에 따른 포지션 크기 계산
+        - Manual 모드: 계좌잔고 * max_loss% / stop_loss%
+        - Turtle 모드: (계좌잔고 * max_loss%) / (ATR * stop_loss배수 / 현재가)
         """
         try:
             balance = KisKR.GetBalance()
             total_money = float(balance["TotalMoney"])
-
+            trading_mode = config.get("trading_mode", "manual")
             max_loss_percent = config.get("max_loss", 2.0) / 100  # 2% -> 0.02
-            stop_loss_percent = config.get("stop_loss", 8.0) / 100  # 8% -> 0.08
 
-            # 전체 투자금액 계산
-            position_amount = total_money * max_loss_percent / stop_loss_percent
+            if trading_mode == "manual":
+                # % 기반 계산 (기존 방식)
+                stop_loss_percent = config.get("stop_loss", 8.0) / 100  # 8% -> 0.08
+                position_amount = total_money * max_loss_percent / stop_loss_percent
+                
+                print(
+                    f"[{config['stock_name']}] Manual 모드 - 계좌잔고: {total_money:,.0f}원, "
+                    f"위험허용: {max_loss_percent*100:.1f}%, 손절: {stop_loss_percent*100:.1f}%, "
+                    f"포지션: {position_amount:,.0f}원"
+                )
+                
+            elif trading_mode == "turtle":
+                # ATR 기반 계산 (새로운 방식)
+                stock_code = config["stock_code"]
+                atr = self.get_atr(stock_code, 14)
+                
+                if atr:
+                    current_price = float(KisKR.GetCurrentPrice(stock_code))
+                    stop_loss_multiplier = config.get("stop_loss", 2.0)  # ATR 배수
+                    
+                    # 위험 허용 금액
+                    risk_amount = total_money * max_loss_percent
+                    # ATR 기반 스톱로스 금액 (원)
+                    stop_loss_amount = atr * stop_loss_multiplier
+                    # 스톱로스 비율
+                    stop_loss_ratio = stop_loss_amount / current_price
+                    # 포지션 크기 계산
+                    position_amount = risk_amount / stop_loss_ratio
+                    
+                    print(
+                        f"[{config['stock_name']}] Turtle 모드 - 계좌잔고: {total_money:,.0f}원, "
+                        f"위험허용: {risk_amount:,.0f}원, ATR: {atr:.1f}원, "
+                        f"손절폭: {stop_loss_amount:,.0f}원({stop_loss_ratio*100:.1f}%), "
+                        f"포지션: {position_amount:,.0f}원"
+                    )
+                else:
+                    # ATR 계산 실패시 manual 방식으로 fallback
+                    print(f"[{config['stock_name']}] ATR 계산 실패, Manual 방식으로 fallback")
+                    stop_loss_percent = config.get("stop_loss", 2.0) / 100
+                    position_amount = total_money * max_loss_percent / stop_loss_percent
+                    
+                    print(
+                        f"[{config['stock_name']}] Fallback - 계좌잔고: {total_money:,.0f}원, "
+                        f"포지션: {position_amount:,.0f}원"
+                    )
+            else:
+                # 알 수 없는 모드의 경우 manual 방식으로 처리
+                print(f"[{config['stock_name']}] 알 수 없는 매매모드: {trading_mode}, Manual 방식 적용")
+                stop_loss_percent = config.get("stop_loss", 8.0) / 100
+                position_amount = total_money * max_loss_percent / stop_loss_percent
 
-            print(
-                f"[{config['stock_name']}] 계좌잔고: {total_money:,.0f}원, 1회투자금: {position_amount:,.0f}원"
-            )
             return position_amount
 
         except Exception as e:
