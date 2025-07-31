@@ -43,21 +43,21 @@ class AutoTradingBot:
         """
         자동매매 봇 초기화
         Args:
-            mode: "REAL" 또는 "VIRTUAL"
+            mode: "REAL" 또는 "VIRTUAL" (KIS API 모드용, 파일명에는 영향 없음)
         """
-        self.mode = mode
+        self.mode = mode  # KIS API 모드 설정용으로만 사용
         self.trading_configs = []
         self.bot_name = "AutoTrading_Bot"
 
         # 매수 이력 관리 (종목코드: {'entries': [...], 'avg_price': float, 'entry_count': int})
         self.trade_history = {}
-        self.history_file = f"trade_history_{mode.lower()}.json"
+        self.history_file = "trade_history.json"  # 통합된 파일명
 
-        # CSV 로그 파일 경로
-        self.trade_log_file = f"trading_log_{mode.lower()}.csv"
-        self.summary_file = f"trading_summary_{mode.lower()}.csv"
+        # CSV 로그 파일 경로 (통합)
+        self.trade_log_file = "trading_log.csv"
+        self.summary_file = "trading_summary.csv"
 
-        # 계좌 모드 설정
+        # 계좌 모드 설정 (KIS API용)
         Common.SetChangeMode(mode)
         print(f"[{datetime.now()}] 자동매매 봇 시작 - 모드: {mode}")
 
