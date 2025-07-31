@@ -684,7 +684,7 @@ class AutoTradingBot:
             max_loss_percent = config.get("max_loss", 2.0) / 100  # 2% -> 0.02
             stop_loss_percent = config.get("stop_loss", 8.0) / 100  # 8% -> 0.08
 
-            # 1회 투자금액 계산
+            # 전체 투자금액 계산
             position_amount = total_money * max_loss_percent / stop_loss_percent
 
             print(
@@ -733,7 +733,9 @@ class AutoTradingBot:
 
             # 피라미딩 금액 배열 계산
             amounts = self.calculate_pyramiding_amounts(config, total_amount)
-
+            print(
+                f"[{config['stock_name']}] 현재 진입 차수: {current_entry_count}, 금액 배열: {amounts}"
+            )
             # 현재 진입 차수에 해당하는 금액 반환
             if current_entry_count < len(amounts):
                 return amounts[current_entry_count]
@@ -1238,7 +1240,6 @@ class AutoTradingBot:
             if balance is None or float(balance["TotalMoney"]) <= 0:
                 print("잔고가 부족합니다. 매매를 중단합니다.")
                 return
-            print(f"현재 잔고: {balance['TotalMoney']}원")
 
             # 각 설정에 대해 매매 로직 실행
             print("매매대상 종목 수:", len(self.trading_configs))
@@ -1248,7 +1249,7 @@ class AutoTradingBot:
                     print(f"\n[{stock_name}] 매매 체크 시작")
 
                     # 100ms 딜레이 추가
-                    time.sleep(2)  # 500ms 딜레이
+                    time.sleep(1)  # 500ms 딜레이
 
                     # 청산 조건 체크 (우선순위: 손절/익절)
                     should_exit, exit_reason = self.check_exit_conditions(config)
@@ -1259,7 +1260,7 @@ class AutoTradingBot:
                     # 진입 조건 체크
                     should_enter = self.check_entry_conditions(config)
                     if should_enter:
-                        # 포지션 크기 계산
+                        # 전체 포지션 크기 계산
                         position_amount = self.calculate_position_size(config)
                         if position_amount > 0:
                             # 현재 진입 차수에 해당하는 금액 계산
