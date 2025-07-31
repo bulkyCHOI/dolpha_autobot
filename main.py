@@ -25,6 +25,7 @@ app.add_middleware(
 
 STOCKS_FILE = "stocks.json"
 TRADING_CONFIGS_FILE = "trading_configs.json"
+TRADE_HISTORY_FILE = "tradingBot/trade_history.json"
 class Stock(BaseModel):
     id: Optional[int] = None
     code: str
@@ -545,6 +546,113 @@ async def delete_trading_config_by_user_stock(user_id: str, stock_code: str, str
         status_code=404, 
         detail=f"사용자 {user_id}의 {stock_code} 자동매매 설정을 찾을 수 없습니다"
     )
+
+
+def load_trade_history():
+    """거래 이력 JSON 파일을 로드합니다."""
+    if not os.path.exists(TRADE_HISTORY_FILE):
+        return {}
+    try:
+        with open(TRADE_HISTORY_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {}
+
+
+def calculate_pyramiding_status(stock_code: str, config: dict, trade_history: dict):
+    """피라미딩 진행 상황을 계산합니다."""
+    history = trade_history.get(stock_code, {})
+    
+    # 기본값 설정
+    planned_pyramiding_count = config.get("pyramiding_count", 0)
+    total_possible_entries = 1 + planned_pyramiding_count  # 초기 진입 + 피라미딩 횟수
+    actual_entries = history.get("entry_count", 0)  # 실제 진입 횟수
+    
+    # 실제 진입한 포지션만 계산 (진입 횟수만큼의 positions 합계)
+    positions = config.get("positions", [100])  # 기본값 100%
+    if isinstance(positions, list) and actual_entries > 0:
+        # 실제 진입한 횟수만큼의 포지션만 합계
+        actual_positions = positions[:actual_entries]
+        position_sum = sum(actual_positions)
+    else:
+        position_sum = 0
+    
+    # 보유금액 계산 (avg_price * total_quantity)
+    avg_price = history.get("avg_price", 0)
+    total_quantity = history.get("total_quantity", 0)
+    holding_amount = avg_price * total_quantity if avg_price and total_quantity else 0
+    
+    return {
+        "stock_code": stock_code,
+        "stock_name": config.get("stock_name", ""),
+        "planned_pyramiding": planned_pyramiding_count,
+        "total_possible_entries": total_possible_entries,  # 총 진입 가능 횟수
+        "actual_entries": actual_entries,  # 실제 진입 횟수
+        "position_sum": position_sum,  # 포지션 합계 (%)
+        "avg_price": avg_price,
+        "total_quantity": total_quantity,
+        "holding_amount": holding_amount,  # 보유금액
+        "entry_count": history.get("entry_count", 0),
+        "last_entry_type": history.get("entries", [])[-1].get("type", "none") if history.get("entries") else "none",
+        "entries": history.get("entries", [])
+    }
+
+
+@app.get("/api/trading-status")
+async def get_trading_status():
+    """현재 거래 상태 및 피라미딩 정보를 조회합니다."""
+    try:
+        # 거래 이력 로드
+        trade_history = load_trade_history()
+        
+        # 자동매매 설정 로드
+        configs_data = load_trading_configs()
+        
+        result = {}
+        for config in configs_data:
+            stock_code = config["stock_code"]
+            result[stock_code] = calculate_pyramiding_status(stock_code, config, trade_history)
+            
+        return {
+            "status": "success", 
+            "data": result,
+            "timestamp": datetime.now().isoformat(),
+            "total_configs": len(configs_data),
+            "active_positions": len([k for k, v in trade_history.items() if v.get("entry_count", 0) > 0])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"거래 상태 조회 오류: {str(e)}")
+
+
+@app.get("/api/trading-status/{stock_code}")
+async def get_stock_trading_status(stock_code: str):
+    """특정 종목의 거래 상태를 조회합니다."""
+    try:
+        # 거래 이력 로드
+        trade_history = load_trade_history()
+        
+        # 해당 종목의 설정 찾기
+        configs_data = load_trading_configs()
+        config = None
+        for c in configs_data:
+            if c["stock_code"] == stock_code:
+                config = c
+                break
+                
+        if not config:
+            raise HTTPException(status_code=404, detail=f"종목 {stock_code}의 설정을 찾을 수 없습니다")
+            
+        result = calculate_pyramiding_status(stock_code, config, trade_history)
+        
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"종목 거래 상태 조회 오류: {str(e)}")
 
 
 @app.get("/health")
