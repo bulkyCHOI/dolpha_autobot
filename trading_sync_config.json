@@ -1,0 +1,12 @@
+{
+  "backend_url": "http://localhost:8000",
+  "api_key": "",
+  "user_id": 1,
+  "sync_enabled": true,
+  "retry_count": 3,
+  "retry_delay": 5,
+  "debounce_delay": 5,
+  "csv_file_path": "tradingBot/trading_summary.csv",
+  "backup_enabled": true,
+  "backup_directory": "backups/"
+}

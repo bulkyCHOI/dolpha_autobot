@@ -6,6 +6,7 @@ from typing import List, Optional
 import uvicorn
 import json
 import os
+import csv
 from datetime import datetime
 
 # FastAPI 인스턴스 생성
@@ -26,6 +27,7 @@ app.add_middleware(
 STOCKS_FILE = "stocks.json"
 TRADING_CONFIGS_FILE = "trading_configs.json"
 TRADE_HISTORY_FILE = "tradingBot/trade_history.json"
+TRADING_SUMMARY_CSV = "tradingBot/trading_summary.csv"
 class Stock(BaseModel):
     id: Optional[int] = None
     code: str
@@ -56,6 +58,26 @@ class AutoTradingConfig(BaseModel):
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     is_active: bool = True
+
+
+class TradingSummaryRecord(BaseModel):
+    stock_code: str
+    stock_name: str
+    first_entry_date: Optional[str] = None
+    last_exit_date: Optional[str] = None
+    total_buy_amount: int = 0
+    total_sell_amount: int = 0
+    total_profit_loss: int = 0
+    profit_loss_percent: float = 0.0
+    max_drawdown: Optional[float] = None
+    holding_days: float = 0.0
+    entry_count: int = 0
+    exit_count: int = 0
+    trading_mode: str
+    win_rate: float = 0.0
+    avg_holding_days: float = 0.0
+    max_profit_percent: Optional[float] = None
+    final_status: str
 
 
 def load_stocks():
@@ -106,6 +128,77 @@ def get_next_config_id():
     if not configs_data:
         return 1
     return max(config["id"] for config in configs_data) + 1
+
+
+def load_trading_summary_csv():
+    """trading_summary.csv 파일을 로드합니다."""
+    if not os.path.exists(TRADING_SUMMARY_CSV):
+        return []
+    
+    try:
+        with open(TRADING_SUMMARY_CSV, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            data = []
+            
+            for row in reader:
+                # CSV 데이터를 적절한 타입으로 변환
+                record = {
+                    "stock_code": row.get("stock_code", ""),
+                    "stock_name": row.get("stock_name", ""),
+                    "first_entry_date": row.get("first_entry_date") if row.get("first_entry_date") else None,
+                    "last_exit_date": row.get("last_exit_date") if row.get("last_exit_date") else None,
+                    "total_buy_amount": int(float(row.get("total_buy_amount", 0))),
+                    "total_sell_amount": int(float(row.get("total_sell_amount", 0))),
+                    "total_profit_loss": int(float(row.get("total_profit_loss", 0))),
+                    "profit_loss_percent": float(row.get("profit_loss_percent", 0.0)),
+                    "max_drawdown": float(row.get("max_drawdown")) if row.get("max_drawdown") and row.get("max_drawdown") != "" else None,
+                    "holding_days": float(row.get("holding_days", 0.0)),
+                    "entry_count": int(float(row.get("entry_count", 0))),
+                    "exit_count": int(float(row.get("exit_count", 0))),
+                    "trading_mode": row.get("trading_mode", "manual"),
+                    "win_rate": float(row.get("win_rate", 0.0)),
+                    "avg_holding_days": float(row.get("avg_holding_days", 0.0)),
+                    "max_profit_percent": float(row.get("max_profit_percent")) if row.get("max_profit_percent") and row.get("max_profit_percent") != "" else None,
+                    "final_status": row.get("final_status", "CLOSED")
+                }
+                data.append(record)
+            
+            return data
+            
+    except (FileNotFoundError, csv.Error, ValueError) as e:
+        print(f"CSV 파일 로드 오류: {e}")
+        return []
+
+
+def get_trading_summary_stats(data):
+    """거래 요약 통계를 계산합니다."""
+    if not data:
+        return {
+            "total_trades": 0,
+            "total_profit_loss": 0,
+            "win_rate": 0.0,
+            "avg_profit_loss": 0.0,
+            "closed_trades": 0,
+            "holding_trades": 0
+        }
+    
+    total_trades = len(data)
+    closed_trades = len([d for d in data if d["final_status"] == "CLOSED"])
+    holding_trades = len([d for d in data if d["final_status"] == "HOLDING"])
+    
+    total_profit_loss = sum(d["total_profit_loss"] for d in data)
+    profitable_trades = len([d for d in data if d["total_profit_loss"] > 0])
+    win_rate = (profitable_trades / total_trades * 100) if total_trades > 0 else 0.0
+    avg_profit_loss = total_profit_loss / total_trades if total_trades > 0 else 0.0
+    
+    return {
+        "total_trades": total_trades,
+        "total_profit_loss": total_profit_loss,
+        "win_rate": round(win_rate, 2),
+        "avg_profit_loss": round(avg_profit_loss, 2),
+        "closed_trades": closed_trades,
+        "holding_trades": holding_trades
+    }
 
 
 def initialize_sample_data():
@@ -199,6 +292,13 @@ async def read_root():
                     <p><strong>DELETE</strong> <code>/trading-configs/user/{user_id}/stock/{stock_code}</code> - 사용자별 종목별 설정 삭제</p>
                     <p><strong>POST</strong> <code>/trading-configs/{config_id}/toggle</code> - 활성화/비활성화</p>
                     <p><strong>POST</strong> <code>/trading-configs/user/{user_id}/stock/{stock_code}/toggle</code> - 사용자별 종목별 활성화/비활성화</p>
+                </div>
+                
+                <div class="endpoint">
+                    <h3>📊 매매복기 데이터</h3>
+                    <p><strong>GET</strong> <code>/trading-summary</code> - 모든 매매복기 조회</p>
+                    <p><strong>GET</strong> <code>/trading-summary/stats</code> - 매매 통계 조회</p>
+                    <p><strong>GET</strong> <code>/trading-summary/{stock_code}</code> - 특정 종목 매매복기 조회</p>
                 </div>
                 
                 <p><a href="/docs">📖 Swagger UI 문서 보기</a></p>
@@ -653,6 +753,75 @@ async def get_stock_trading_status(stock_code: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"종목 거래 상태 조회 오류: {str(e)}")
+
+
+@app.get("/trading-summary", response_model=List[TradingSummaryRecord])
+async def get_trading_summary():
+    """모든 매매복기 데이터를 조회합니다."""
+    try:
+        data = load_trading_summary_csv()
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"CSV 파일 읽기 오류: {str(e)}")
+
+
+@app.get("/trading-summary/stats")
+async def get_trading_summary_stats_endpoint():
+    """매매 통계를 조회합니다."""
+    try:
+        data = load_trading_summary_csv()
+        stats = get_trading_summary_stats(data)
+        return {
+            "status": "success",
+            "data": stats,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"통계 계산 오류: {str(e)}")
+
+
+@app.get("/trading-summary/{stock_code}", response_model=TradingSummaryRecord)
+async def get_trading_summary_by_stock(stock_code: str):
+    """특정 종목의 매매복기 데이터를 조회합니다."""
+    try:
+        data = load_trading_summary_csv()
+        
+        for record in data:
+            if record["stock_code"] == stock_code:
+                return record
+        
+        raise HTTPException(
+            status_code=404, 
+            detail=f"종목 코드 '{stock_code}'의 매매복기 데이터를 찾을 수 없습니다"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"데이터 조회 오류: {str(e)}")
+
+
+@app.get("/trading-summary-file-exists")
+async def check_trading_summary_file():
+    """매매복기 CSV 파일 존재 여부를 확인합니다."""
+    exists = os.path.exists(TRADING_SUMMARY_CSV)
+    file_info = {}
+    
+    if exists:
+        try:
+            stat = os.stat(TRADING_SUMMARY_CSV)
+            file_info = {
+                "size": stat.st_size,
+                "modified_time": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                "readable": os.access(TRADING_SUMMARY_CSV, os.R_OK)
+            }
+        except Exception as e:
+            file_info = {"error": str(e)}
+    
+    return {
+        "exists": exists,
+        "file_path": TRADING_SUMMARY_CSV,
+        "file_info": file_info
+    }
 
 
 @app.get("/health")

@@ -22,6 +22,7 @@ from datetime import datetime
 from pytz import timezone
 import traceback
 import pprint
+from backend_api_client import backend_client
 
 # 현재 디렉토리에 tradingBot 모듈 추가 (현재 파일이 tradingBot 내부에 있으므로 상위 디렉토리 추가)
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -479,6 +480,40 @@ class AutoTradingBot:
                     writer.writerow(data)
 
             print(f"[{stock_name}] 거래 요약 업데이트 완료")
+            
+            # Backend API로 데이터 전송
+            try:
+                current_data = summary_data.get(stock_code, {})
+                if current_data:
+                    # Backend API 호출을 위한 데이터 변환
+                    backend_data = {
+                        'stock_code': current_data.get('stock_code', ''),
+                        'stock_name': current_data.get('stock_name', ''),
+                        'first_entry_date': current_data.get('first_entry_date', ''),
+                        'last_exit_date': current_data.get('last_exit_date', ''),
+                        'total_buy_amount': int(float(current_data.get('total_buy_amount', 0))),
+                        'total_sell_amount': int(float(current_data.get('total_sell_amount', 0))),
+                        'total_profit_loss': int(float(current_data.get('total_profit_loss', 0))),
+                        'profit_loss_percent': float(current_data.get('profit_loss_percent', 0.0)),
+                        'max_drawdown': float(current_data.get('max_drawdown')) if current_data.get('max_drawdown') and current_data.get('max_drawdown') != '' else None,
+                        'holding_days': float(current_data.get('holding_days', 0.0)),
+                        'entry_count': int(float(current_data.get('entry_count', 0))),
+                        'exit_count': int(float(current_data.get('exit_count', 0))),
+                        'trading_mode': current_data.get('trading_mode', 'manual'),
+                        'win_rate': float(current_data.get('win_rate', 0.0)),
+                        'avg_holding_days': float(current_data.get('avg_holding_days', 0.0)),
+                        'max_profit_percent': float(current_data.get('max_profit_percent')) if current_data.get('max_profit_percent') and current_data.get('max_profit_percent') != '' else None,
+                        'final_status': current_data.get('final_status', 'CLOSED')
+                    }
+                    
+                    # Backend API 호출
+                    success = backend_client.send_trading_summary(backend_data)
+                    if success:
+                        print(f"[{stock_name}] Backend DB 동기화 성공")
+                    else:
+                        print(f"[{stock_name}] Backend DB 동기화 실패")
+            except Exception as api_error:
+                print(f"[{stock_name}] Backend API 호출 오류: {api_error}")
 
         except Exception as e:
             print(f"거래 요약 업데이트 오류: {e}")

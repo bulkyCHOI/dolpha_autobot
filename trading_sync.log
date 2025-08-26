@@ -1,0 +1,2 @@
+2025-08-14 09:28:19,672 - trading_sync_manager - INFO - CSV 파일에서 2개의 유효한 데이터 읽기 완료
+2025-08-14 09:28:19,672 - trading_sync_manager - INFO - CSV 파일 백업 완료: test_backups/trading_summary_20250814_092819.csv
